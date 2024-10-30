@@ -8,14 +8,32 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IdentityManager } from "./IdentityManager.sol";
 import { ISuffragium } from "./interfaces/ISuffragium.sol";
 
+/**
+ * @title Suffragium
+ * @dev A voting system contract that uses FHE (Fully Homomorphic Encryption) to enable private voting
+ * while maintaining vote integrity and preventing manipulation.
+ */
 contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
-    euint64 private immutable ENC_ONE;
+    // Encrypted value representing 1, used for vote counting
+    euint64 private ENC_ONE;
 
+    // Mapping of vote IDs to Vote structs containing vote details
     mapping(uint256 => Vote) public votes;
+    // Double mapping tracking which voters have cast votes for each vote ID
     mapping(uint256 => mapping(bytes32 => bool)) private _castedVotes;
+    // Counter for generating unique vote IDs
     uint256 private _nextVoteId;
+    // Minimum quorum required for a vote to pass (in basis points)
     uint256 public minQuorum;
 
+    /**
+     * @dev Constructor initializes the contract with required parameters
+     * @param verifier Address of the proof verifier contract
+     * @param programVKey Verification key for the zero-knowledge program
+     * @param emailPublicKeyHash Hash of the email public key for voter verification
+     * @param fromDomainHash Hash of the allowed email domain
+     * @param initialMinQuorum Initial minimum quorum requirement
+     */
     constructor(
         address verifier,
         bytes32 programVKey,
@@ -54,11 +72,13 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
         Vote storage vote = _getVote(voteId);
         if (block.number > vote.endBlock) revert VoteClosed();
 
+        // Convert and validate the encrypted vote
         euint64 support = TFHE.asEuint64(encryptedSupport, supportProof);
         TFHE.allowTransient(support, address(this));
         ebool isValid = TFHE.le(support, ENC_ONE);
         TFHE.allowTransient(isValid, address(this));
 
+        // Update vote tallies if vote is valid
         euint64 encryptedResult = vote.encryptedResult;
         euint64 encryptedValidVotes = vote.encryptedValidVotes;
         vote.encryptedResult = TFHE.select(isValid, TFHE.add(support, encryptedResult), encryptedResult);
@@ -91,6 +111,7 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
         Vote storage vote = _getVote(voteId);
         if (block.number <= vote.endBlock) revert VoteNotClosed();
 
+        // Request decryption of vote results through the Gateway
         uint256[] memory cts = new uint256[](2);
         cts[0] = Gateway.toUint256(vote.encryptedResult);
         cts[1] = Gateway.toUint256(vote.encryptedValidVotes);
@@ -106,6 +127,7 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
         uint256[] memory params = getParamsUint256(requestId);
         uint256 voteId = params[0];
 
+        // Update vote with decrypted results
         Vote storage vote = _getVote(voteId);
         vote.state = VoteState.Revealed;
         vote.result = result;
@@ -120,6 +142,12 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
         emit MinQuorumSet(newMinQuorum);
     }
 
+    /**
+     * @dev Internal function to retrieve a vote by ID
+     * @param voteId The ID of the vote to retrieve
+     * @return Vote storage pointer to the vote data
+     * @revert VoteDoesNotExist if vote with given ID doesn't exist
+     */
     function _getVote(uint256 voteId) internal view returns (Vote storage) {
         Vote storage vote = votes[voteId];
         if (vote.endBlock == 0) revert VoteDoesNotExist();
