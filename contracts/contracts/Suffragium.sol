@@ -15,7 +15,7 @@ import { ISuffragium } from "./interfaces/ISuffragium.sol";
  */
 contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
     // Encrypted value representing 1, used for vote counting
-    euint64 private ENC_ONE;
+    euint64 internal ENC_ONE;
 
     // Mapping of vote IDs to Vote structs containing vote details
     mapping(uint256 => Vote) public votes;
