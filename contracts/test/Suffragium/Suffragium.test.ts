@@ -36,7 +36,6 @@ describe("Suffragium", function () {
       PROGRAM_VERIFICATION_KEY,
       EMAIL_PUBLIC_KEY_HASH,
       FROM_DOMAIN_HASH,
-      MIN_QUORUM,
     );
     instances = await createInstances(signers);
   });
@@ -45,7 +44,9 @@ describe("Suffragium", function () {
     const voteId = 0;
     const voterId = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
     const endBlock = (await ethers.provider.getBlockNumber()) + VOTE_DURATION;
-    await expect(suffragium.createVote(endBlock, "description")).to.emit(suffragium, "VoteCreated").withArgs(voteId);
+    await expect(suffragium.createVote(endBlock, MIN_QUORUM, "description"))
+      .to.emit(suffragium, "VoteCreated")
+      .withArgs(voteId);
 
     const input = instances.alice.createEncryptedInput(await suffragium.getAddress(), signers.alice.address);
     const encryptedInput = input.add64(1).encrypt();
@@ -62,7 +63,9 @@ describe("Suffragium", function () {
     const voteId = 0;
     const voterId = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
     const endBlock = (await ethers.provider.getBlockNumber()) + VOTE_DURATION;
-    await expect(suffragium.createVote(endBlock, "description")).to.emit(suffragium, "VoteCreated").withArgs(voteId);
+    await expect(suffragium.createVote(endBlock, MIN_QUORUM, "description"))
+      .to.emit(suffragium, "VoteCreated")
+      .withArgs(voteId);
 
     const input = instances.alice.createEncryptedInput(await suffragium.getAddress(), signers.alice.address);
     const encryptedInput = input.add64(1).encrypt();
@@ -79,8 +82,9 @@ describe("Suffragium", function () {
   it("should be able to cast more votes and reveal the result when the quorum (80%) is reached", async () => {
     const voteId = 0;
     const endBlock = (await ethers.provider.getBlockNumber()) + VOTE_DURATION;
-    await expect(suffragium.createVote(endBlock, "description")).to.emit(suffragium, "VoteCreated").withArgs(voteId);
-    await suffragium.setMinQuorum("800000000000000000"); // 80%
+    await expect(suffragium.createVote(endBlock, "800000000000000000", "description"))
+      .to.emit(suffragium, "VoteCreated")
+      .withArgs(voteId);
 
     for (const [index, instance] of Object.values(instances).entries()) {
       const input = instance.createEncryptedInput(await suffragium.getAddress(), Object.values(signers)[index].address);
@@ -107,8 +111,9 @@ describe("Suffragium", function () {
   it("should be able to cast more votes and reveal the result when the quorum (100%) is reached", async () => {
     const voteId = 0;
     const endBlock = (await ethers.provider.getBlockNumber()) + VOTE_DURATION;
-    await expect(suffragium.createVote(endBlock, "description")).to.emit(suffragium, "VoteCreated").withArgs(voteId);
-    await suffragium.setMinQuorum("1000000000000000000"); // 100%
+    await expect(suffragium.createVote(endBlock, "1000000000000000000", "description"))
+      .to.emit(suffragium, "VoteCreated")
+      .withArgs(voteId);
 
     for (const [index, instance] of Object.values(instances).entries()) {
       const input = instance.createEncryptedInput(await suffragium.getAddress(), Object.values(signers)[index].address);
@@ -135,7 +140,9 @@ describe("Suffragium", function () {
   it("should be able to cast more votes and reveal the result when the quorum is not reached", async () => {
     const voteId = 0;
     const endBlock = (await ethers.provider.getBlockNumber()) + VOTE_DURATION;
-    await expect(suffragium.createVote(endBlock, "description")).to.emit(suffragium, "VoteCreated").withArgs(voteId);
+    await expect(suffragium.createVote(endBlock, MIN_QUORUM, "description"))
+      .to.emit(suffragium, "VoteCreated")
+      .withArgs(voteId);
 
     for (const [index, instance] of Object.values(instances).entries()) {
       const input = instance.createEncryptedInput(await suffragium.getAddress(), Object.values(signers)[index].address);
