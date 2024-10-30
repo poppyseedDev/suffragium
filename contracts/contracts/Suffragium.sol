@@ -146,7 +146,6 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
      * @dev Internal function to retrieve a vote by ID
      * @param voteId The ID of the vote to retrieve
      * @return Vote storage pointer to the vote data
-     * @revert VoteDoesNotExist if vote with given ID doesn't exist
      */
     function _getVote(uint256 voteId) internal view returns (Vote storage) {
         Vote storage vote = votes[voteId];

@@ -1,18 +1,18 @@
 # contracts
 
-## Overview
+### Overview
 
-### `IdentityManager.sol`
+#### `IdentityManager.sol`
 
 Handles voter verification using DKIM email signatures and zero-knowledge proofs to ensure voter authenticity while
 maintaining privacy.
 
-### `Suffragium.sol`
+#### `Suffragium.sol`
 
 Main voting contract implementing FHE-based private voting with encrypted vote casting, quorum requirements, and vote
 revelation.
 
-### `Suffragium.test.ts`
+#### `Suffragium.test.ts`
 
 Test suite covering vote casting, double voting prevention, and various quorum scenarios using mock FHE instances.
 
