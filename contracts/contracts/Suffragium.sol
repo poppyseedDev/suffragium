@@ -9,7 +9,7 @@ import { IdentityManager } from "./IdentityManager.sol";
 import { ISuffragium } from "./interfaces/ISuffragium.sol";
 
 contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
-    euint64 private immutable ENC_ONE;
+    euint64 internal ENC_ONE;
 
     mapping(uint256 => Vote) public votes;
     mapping(uint256 => mapping(bytes32 => bool)) private _castedVotes;
