@@ -30,7 +30,6 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
      * @param programVKey Verification key for the zero-knowledge program
      * @param emailPublicKeyHash Hash of the email public key for voter verification
      * @param fromDomainHash Hash of the allowed email domain
-     * @param initialMinQuorum Initial minimum quorum requirement
      */
     constructor(
         address verifier,
@@ -140,11 +139,11 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
 
         emit VoteRevealed(voteId);
     }
+
     /**
      * @dev Internal helper to retrieve a vote by ID and validate its existence
      * @param voteId ID of the vote to retrieve
      * @return Vote storage pointer to the vote data
-     * @revert VoteDoesNotExist if vote with given ID does not exist
      */
     function _getVote(uint256 voteId) internal view returns (Vote storage) {
         Vote storage vote = votes[voteId];
