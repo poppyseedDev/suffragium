@@ -1,3 +1,4 @@
+// Import required testing and contract dependencies
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
@@ -8,6 +9,7 @@ import { Signers, getSigners, initSigners } from "../signers";
 import { FhevmInstances } from "../types";
 import { mineNBlocks } from "../utils";
 
+// Constants used throughout the tests
 const PROGRAM_VERIFICATION_KEY = "0x0000000000000000000000000000000000000000000000000000000000000000";
 const VOTE_DURATION = 100; // blocks
 const EMAIL_PUBLIC_KEY_HASH = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
@@ -16,16 +18,19 @@ const abiCoder = new ethers.AbiCoder();
 const MIN_QUORUM = "500000000000000000"; // 0.5 -> 50%
 
 describe("Suffragium", function () {
+  // Test variables
   let signers: Signers;
   let verifier: SP1MockVerifier;
   let suffragium: Suffragium;
   let instances: FhevmInstances;
 
+  // Initialize signers before all tests
   before(async () => {
     await initSigners();
     signers = await getSigners();
   });
 
+  // Setup fresh contract instances before each test
   beforeEach(async () => {
     const Suffragium = await ethers.getContractFactory("Suffragium");
     const SP1MockVerifier = await ethers.getContractFactory("SP1MockVerifier");
@@ -40,6 +45,7 @@ describe("Suffragium", function () {
     instances = await createInstances(signers);
   });
 
+  // Test basic vote casting functionality
   it("should be able to cast a vote", async () => {
     const voteId = 0;
     const voterId = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
@@ -48,6 +54,7 @@ describe("Suffragium", function () {
       .to.emit(suffragium, "VoteCreated")
       .withArgs(voteId);
 
+    // Create and submit an encrypted vote
     const input = instances.alice.createEncryptedInput(await suffragium.getAddress(), signers.alice.address);
     const encryptedInput = input.add64(1).encrypt();
     const publicValues = abiCoder.encode(
@@ -59,6 +66,7 @@ describe("Suffragium", function () {
       .withArgs(voteId);
   });
 
+  // Test prevention of double voting
   it("should not be able to cast a vote using the same proof more than once", async () => {
     const voteId = 0;
     const voterId = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
@@ -67,6 +75,7 @@ describe("Suffragium", function () {
       .to.emit(suffragium, "VoteCreated")
       .withArgs(voteId);
 
+    // Create and submit first vote
     const input = instances.alice.createEncryptedInput(await suffragium.getAddress(), signers.alice.address);
     const encryptedInput = input.add64(1).encrypt();
     const publicValues = abiCoder.encode(
@@ -74,11 +83,14 @@ describe("Suffragium", function () {
       [FROM_DOMAIN_HASH, EMAIL_PUBLIC_KEY_HASH, voterId, true],
     );
     await suffragium.castVote(voteId, encryptedInput.handles[0], encryptedInput.inputProof, publicValues, "0x");
+
+    // Attempt to vote again with same proof should fail
     await expect(
       suffragium.castVote(voteId, encryptedInput.handles[0], encryptedInput.inputProof, publicValues, "0x"),
     ).to.be.revertedWithCustomError(suffragium, "AlreadyVoted");
   });
 
+  // Test vote passing with 80% quorum
   it("should be able to cast more votes and reveal the result when the quorum (80%) is reached", async () => {
     const voteId = 0;
     const endBlock = (await ethers.provider.getBlockNumber()) + VOTE_DURATION;
@@ -86,6 +98,7 @@ describe("Suffragium", function () {
       .to.emit(suffragium, "VoteCreated")
       .withArgs(voteId);
 
+    // Cast votes from multiple instances
     for (const [index, instance] of Object.values(instances).entries()) {
       const input = instance.createEncryptedInput(await suffragium.getAddress(), Object.values(signers)[index].address);
       const encryptedInput = input.add64(index === 0 ? 0 : 1).encrypt();
@@ -101,6 +114,7 @@ describe("Suffragium", function () {
         .withArgs(voteId);
     }
 
+    // Reveal and verify vote results
     await mineNBlocks(VOTE_DURATION);
     await expect(suffragium.requestRevealVote(voteId)).to.emit(suffragium, "VoteRevealRequested").withArgs(voteId);
     await awaitAllDecryptionResults();
@@ -108,6 +122,7 @@ describe("Suffragium", function () {
     expect(await suffragium.isVotePassed(voteId)).to.be.eq(true);
   });
 
+  // Test vote passing with 100% quorum
   it("should be able to cast more votes and reveal the result when the quorum (100%) is reached", async () => {
     const voteId = 0;
     const endBlock = (await ethers.provider.getBlockNumber()) + VOTE_DURATION;
@@ -115,6 +130,7 @@ describe("Suffragium", function () {
       .to.emit(suffragium, "VoteCreated")
       .withArgs(voteId);
 
+    // Cast unanimous yes votes
     for (const [index, instance] of Object.values(instances).entries()) {
       const input = instance.createEncryptedInput(await suffragium.getAddress(), Object.values(signers)[index].address);
       const encryptedInput = input.add64(1).encrypt();
@@ -130,6 +146,7 @@ describe("Suffragium", function () {
         .withArgs(voteId);
     }
 
+    // Reveal and verify vote results
     await mineNBlocks(VOTE_DURATION);
     await expect(suffragium.requestRevealVote(voteId)).to.emit(suffragium, "VoteRevealRequested").withArgs(voteId);
     await awaitAllDecryptionResults();
@@ -137,6 +154,7 @@ describe("Suffragium", function () {
     expect(await suffragium.isVotePassed(voteId)).to.be.eq(true);
   });
 
+  // Test vote failing when quorum is not reached
   it("should be able to cast more votes and reveal the result when the quorum is not reached", async () => {
     const voteId = 0;
     const endBlock = (await ethers.provider.getBlockNumber()) + VOTE_DURATION;
@@ -144,6 +162,7 @@ describe("Suffragium", function () {
       .to.emit(suffragium, "VoteCreated")
       .withArgs(voteId);
 
+    // Cast alternating yes/no votes
     for (const [index, instance] of Object.values(instances).entries()) {
       const input = instance.createEncryptedInput(await suffragium.getAddress(), Object.values(signers)[index].address);
       const encryptedInput = input.add64(Boolean(index % 2) ? 1 : 0).encrypt();
@@ -159,6 +178,7 @@ describe("Suffragium", function () {
         .withArgs(voteId);
     }
 
+    // Reveal and verify vote results
     await mineNBlocks(VOTE_DURATION);
     await expect(suffragium.requestRevealVote(voteId)).to.emit(suffragium, "VoteRevealRequested").withArgs(voteId);
     await awaitAllDecryptionResults();
