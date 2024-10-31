@@ -18,6 +18,7 @@ interface ISuffragium is IIdentityManager {
 
     struct Vote {
         uint256 endBlock;
+        uint256 minQuorum;
         euint64 encryptedResult;
         euint64 encryptedValidVotes;
         uint256 result;
@@ -37,7 +38,7 @@ interface ISuffragium is IIdentityManager {
     error VoteNotClosed();
     error VoteClosed();
 
-    function createVote(uint256 endBlock, string calldata description) external;
+    function createVote(uint256 endBlock, uint256 minQuorum, string calldata description) external;
 
     function castVote(
         uint256 voteId,
@@ -56,6 +57,4 @@ interface ISuffragium is IIdentityManager {
     function requestRevealVote(uint256 voteId) external;
 
     function revealVote(uint256 requestId, uint256 encryptedResult, uint256 encryptedValidVotes) external;
-
-    function setMinQuorum(uint256 newMinQuorum) external;
 }

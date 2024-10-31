@@ -23,8 +23,6 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
     mapping(uint256 => mapping(bytes32 => bool)) private _castedVotes;
     // Counter for generating unique vote IDs
     uint256 private _nextVoteId;
-    // Minimum quorum required for a vote to pass (in basis points)
-    uint256 public minQuorum;
 
     /**
      * @dev Constructor initializes the contract with required parameters
@@ -38,18 +36,25 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
         address verifier,
         bytes32 programVKey,
         bytes32 emailPublicKeyHash,
-        bytes32 fromDomainHash,
-        uint256 initialMinQuorum
+        bytes32 fromDomainHash
     ) IdentityManager(verifier, programVKey, emailPublicKeyHash, fromDomainHash) Ownable(msg.sender) {
         ENC_ONE = TFHE.asEuint64(1);
         TFHE.allow(ENC_ONE, address(this));
-        minQuorum = initialMinQuorum;
     }
 
     /// @inheritdoc ISuffragium
-    function createVote(uint256 endBlock, string calldata description) external onlyOwner {
+    function createVote(uint256 endBlock, uint256 minQuorum, string calldata description) external onlyOwner {
         uint256 voteId = _nextVoteId;
-        votes[voteId] = Vote(endBlock, TFHE.asEuint64(0), TFHE.asEuint64(0), 0, 0, description, VoteState.Created);
+        votes[voteId] = Vote(
+            endBlock,
+            minQuorum,
+            TFHE.asEuint64(0),
+            TFHE.asEuint64(0),
+            0,
+            0,
+            description,
+            VoteState.Created
+        );
         TFHE.allow(votes[voteId].encryptedResult, address(this));
         TFHE.allow(votes[voteId].encryptedValidVotes, address(this));
         _nextVoteId++;
@@ -103,7 +108,7 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
     function isVotePassed(uint256 voteId) external view returns (bool) {
         Vote storage vote = _getVote(voteId);
         if (vote.state != VoteState.Revealed) return false;
-        return (vote.result * 10 ** 18) / vote.validVotes >= minQuorum;
+        return (vote.result * 10 ** 18) / vote.validVotes >= vote.minQuorum;
     }
 
     /// @inheritdoc ISuffragium
@@ -135,17 +140,11 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
 
         emit VoteRevealed(voteId);
     }
-
-    /// @inheritdoc ISuffragium
-    function setMinQuorum(uint256 newMinQuorum) external onlyOwner {
-        minQuorum = newMinQuorum;
-        emit MinQuorumSet(newMinQuorum);
-    }
-
     /**
-     * @dev Internal function to retrieve a vote by ID
-     * @param voteId The ID of the vote to retrieve
+     * @dev Internal helper to retrieve a vote by ID and validate its existence
+     * @param voteId ID of the vote to retrieve
      * @return Vote storage pointer to the vote data
+     * @revert VoteDoesNotExist if vote with given ID does not exist
      */
     function _getVote(uint256 voteId) internal view returns (Vote storage) {
         Vote storage vote = votes[voteId];
