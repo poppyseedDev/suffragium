@@ -22,7 +22,7 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
     // Double mapping tracking which voters have cast votes for each vote ID
     mapping(uint256 => mapping(bytes32 => bool)) private _castedVotes;
     // Counter for generating unique vote IDs
-    uint256 private _nextVoteId;
+    uint256 public numberOfVotes;
 
     /**
      * @dev Constructor initializes the contract with required parameters
@@ -43,7 +43,7 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
 
     /// @inheritdoc ISuffragium
     function createVote(uint256 endBlock, uint256 minQuorum, string calldata description) external onlyOwner {
-        uint256 voteId = _nextVoteId;
+        uint256 voteId = numberOfVotes;
         votes[voteId] = Vote(
             endBlock,
             minQuorum,
@@ -56,7 +56,7 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
         );
         TFHE.allow(votes[voteId].encryptedResult, address(this));
         TFHE.allow(votes[voteId].encryptedValidVotes, address(this));
-        _nextVoteId++;
+        numberOfVotes++;
         emit VoteCreated(voteId);
     }
 

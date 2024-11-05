@@ -6,7 +6,7 @@ import "fhevm/lib/TFHE.sol";
 import { IIdentityManager } from "./IIdentityManager.sol";
 
 /// @title Suffragium Interface
-/// @author Alessadro Manfredi
+/// @author Alessandro Manfredi
 /// @notice This contract is the interface for the Suffragium voting system.
 interface ISuffragium is IIdentityManager {
     enum VoteState {
