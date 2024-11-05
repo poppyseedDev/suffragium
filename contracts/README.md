@@ -1,5 +1,21 @@
 # contracts
 
+### Overview
+
+#### `IdentityManager.sol`
+
+Handles voter verification using DKIM email signatures and zero-knowledge proofs to ensure voter authenticity while
+maintaining privacy.
+
+#### `Suffragium.sol`
+
+Main voting contract implementing FHE-based private voting with encrypted vote casting, quorum requirements, and vote
+revelation.
+
+#### `Suffragium.test.ts`
+
+Test suite covering vote casting, double voting prevention, and various quorum scenarios using mock FHE instances.
+
 ### Pre Requisites
 
 Install [docker](https://docs.docker.com/engine/install/)
@@ -155,8 +171,10 @@ Then open the file `coverage/index.html`. You can see there which line or branch
 covered or missed by your test suite. This allows increased security by pointing out missing branches not covered yet by
 the current tests.
 
-> [!Note]
-> Due to intrinsic limitations of the original EVM, the mocked version differ in few corner cases from the real fhEVM, the main difference is the difference in gas prices for the FHE operations. This means that before deploying to production, developers still need to run the tests with the original fhEVM node, as a final check in non-mocked mode, with `pnpm test`.
+> [!Note] Due to intrinsic limitations of the original EVM, the mocked version differ in few corner cases from the real
+> fhEVM, the main difference is the difference in gas prices for the FHE operations. This means that before deploying to
+> production, developers still need to run the tests with the original fhEVM node, as a final check in non-mocked mode,
+> with `pnpm test`.
 
 ### Syntax Highlighting
 

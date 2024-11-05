@@ -2408,6 +2408,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
 
 [[package]]
+name = "identity-prover-script"
+version = "0.1.0"
+dependencies = [
+ "cfdkim",
+ "mailparse",
+ "serde_json",
+ "sp1-sdk",
+ "tokio",
+ "trust-dns-resolver",
+]
+
+[[package]]
 name = "idna"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4950,18 +4962,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "identity-prover-script"
-version = "0.1.0"
-dependencies = [
- "cfdkim",
- "mailparse",
- "serde_json",
- "sp1-sdk",
- "tokio",
- "trust-dns-resolver",
 ]
 
 [[package]]
