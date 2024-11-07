@@ -83,13 +83,6 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
         return _castedVotes[voteId][voterId];
     }
 
-    /// @notice Returns the number of votes cast for a specific vote
-    /// @param voteId ID of the vote to get the count for
-    /// @return The number of votes cast
-    function getVoteCount(uint256 voteId) external view returns (uint256) {
-        Vote storage vote = _getVote(voteId);
-        return vote.voteCount;
-    }
 
     /// @inheritdoc ISuffragium
     function isVotePassed(uint256 voteId) external view returns (bool) {
@@ -99,13 +92,6 @@ contract Suffragium is ISuffragium, IdentityManager, GatewayCaller, Ownable {
         return (vote.result * 10 ** 18) / vote.voteCount >= vote.minQuorum;
     }
 
-    /// @notice Returns the result of a vote after it has been revealed
-    /// @param voteId ID of the vote to get the result for
-    /// @return The decrypted result of the vote
-    function getVoteResult(uint256 voteId) external view returns (uint256) {
-        Vote storage vote = _getVote(voteId);
-        return vote.result;
-    }
 
     /// @inheritdoc ISuffragium
     function requestRevealVote(uint256 voteId) external {
